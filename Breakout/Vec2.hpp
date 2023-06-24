@@ -1,4 +1,4 @@
-
+#pragma once
 class Vec2 {
 public:
     float x = 0;
@@ -18,4 +18,6 @@ public:
     Vec2& resize(float length);
     float dist(const Vec2& v) const;
     float length() const;
+    void set(float xin, float yin);
+
 };

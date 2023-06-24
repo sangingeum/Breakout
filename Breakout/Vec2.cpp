@@ -55,3 +55,7 @@ float Vec2::dist(const Vec2& v) const {
 float Vec2::length() const {
     return sqrtf(powf(x, 2) + powf(y, 2));
 }
+void Vec2::set(float xin, float yin) {
+    x = xin;
+    y = yin;
+}
