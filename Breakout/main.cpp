@@ -1,38 +1,19 @@
 #include <iostream>
 #include <format>
 #include <SFML/Graphics.hpp>
-#include "Vec2.hpp"
-
+#include "GameSystem.hpp"
 
 int main()
-{
-    sf::RenderWindow window(sf::VideoMode(200, 200), "SFML works!");
-    sf::CircleShape shape(100.f);
-    shape.setPosition(100.0f, 100.0f);
-    shape.setFillColor(sf::Color::Green);
-
-    while (window.isOpen())
-    {
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-
-            if (event.type == sf::Event::Closed) {
-                window.close();
-            }
-            if (event.type == sf::Event::MouseButtonPressed) {
-                shape.setFillColor(sf::Color::Red);
-            }
-            if (event.type == sf::Event::MouseButtonReleased) {
-                shape.setFillColor(sf::Color::Green);
-            }
-
-        }
-
-        window.clear();
-        window.draw(shape);
-        window.display();
-    }
+{   
+    auto entityManager = std::make_shared<EntityManager>();
+    auto entity = entityManager->addEntity({ ComponentType::POSITION, ComponentType::VELOCITY, ComponentType::SHAPE_RENDER });
+    auto shapeComp = static_pointer_cast<ShapeRenderComponent>(entity->getComponent(ComponentType::SHAPE_RENDER));
+    shapeComp->getShape()->setFillColor(sf::Color::Green);
+    auto velComp = static_pointer_cast<VelocityComponent>(entity->getComponent(ComponentType::VELOCITY));
+    velComp->velocity.set(0.01f, 0.01f);
+    GameSystem system{ entityManager, 500, 500 };
+   
+    system.mainLoop();
 
     return 0;
 }
