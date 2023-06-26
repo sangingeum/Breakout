@@ -10,6 +10,7 @@ class CollisionComponent{
 public:
 	float width = 1.0f; // width or radius
 	float height = 1.0f;
+	bool breakable = true;
 	CollisionBoxType type = CollisionBoxType::RECTANGLE;
 	CollisionComponent() = default;
 };
