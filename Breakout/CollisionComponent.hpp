@@ -6,11 +6,10 @@ enum class CollisionBoxType {
 	CIRCLE = 1
 };
 
-class CollisionComponent : public Component {
+class CollisionComponent{
 public:
-	float x = 1.0f;
-	float y = 1.0f;
+	float width = 1.0f; // width or radius
+	float height = 1.0f;
 	CollisionBoxType type = CollisionBoxType::RECTANGLE;
-	CollisionComponent();
-	CollisionComponent(CollisionBoxType type);
+	CollisionComponent() = default;
 };

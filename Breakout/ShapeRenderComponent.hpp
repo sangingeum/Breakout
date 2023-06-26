@@ -7,15 +7,16 @@ enum class ShapeType {
 	CIRCLE
 };
 
-class ShapeRenderComponent : public Component
+class ShapeRenderComponent
 {	
 	std::shared_ptr<sf::Shape> m_shape;
 	ShapeType m_type;
 public:
 	ShapeRenderComponent();
-	ShapeRenderComponent(float radius);
-	ShapeRenderComponent(float width, float height);
-	std::shared_ptr<sf::Shape> getShape();
+	template<class T> std::shared_ptr<T> getShape();
 	ShapeType getShapeType();
+	void setShape(ShapeType type);
 };
-
+template<class T> std::shared_ptr<T> ShapeRenderComponent::getShape() {
+	return std::static_pointer_cast<T>(m_shape);
+}

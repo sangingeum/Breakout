@@ -1,8 +1,8 @@
 #pragma once
 #include "Component.hpp"
-class PlayerInputComponent : public Component {
+class PlayerInputComponent{
 public:
 	bool isMovingLeft = false;
 	bool isMovingRight = false;
-	PlayerInputComponent();
+	PlayerInputComponent() = default;
 };
