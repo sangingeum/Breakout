@@ -3,13 +3,18 @@
 #include <SFML/Graphics.hpp>
 #include <memory>
 
+struct windowConfig { int width, height, fps; };
+
+
 class GameSystem {
 	std::shared_ptr<EntityManager> m_entityManager;
 	sf::RenderWindow window;
+	bool m_pause = false;
 public:
-	GameSystem(std::shared_ptr<EntityManager> entityManager, unsigned int width, unsigned int height);
-	
-	void mainLoop();
+	GameSystem();
+	void loadConfig();
+	void applyConfig();
+	void run();
 	void handleUserInput();
 	void transform();
 	void collisionCheck();

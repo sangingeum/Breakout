@@ -137,7 +137,6 @@
     <ClCompile Include="CollisionComponent.cpp" />
     <ClCompile Include="ShapeRenderComponent.cpp" />
     <ClInclude Include="CollisionComponent.hpp" />
-    <ClCompile Include="Component.cpp" />
     <ClInclude Include="Component.hpp" />
     <ClCompile Include="Entity.cpp" />
     <ClInclude Include="Entity.hpp" />
@@ -146,17 +145,15 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PlayerInputComponent.cpp" />
     <ClInclude Include="PlayerInputComponent.hpp" />
-    <ClCompile Include="PositionComponent.cpp" />
-    <ClInclude Include="PositionComponent.hpp" />
+    <ClCompile Include="TransformationComponent.cpp" />
+    <ClInclude Include="TransformationComponent.hpp" />
     <ClCompile Include="Vec2.cpp" />
-    <ClCompile Include="VelocityComponent.cpp" />
     <ClInclude Include="ShapeRenderComponent.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EntityManager.hpp" />
     <ClInclude Include="GameSystem.hpp" />
     <ClInclude Include="Vec2.hpp" />
-    <ClInclude Include="VelocityComponent.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
