@@ -15,7 +15,9 @@ public:
 	ShapeRenderComponent();
 	template<class T> std::shared_ptr<T> getShape();
 	ShapeType getShapeType();
-	void setShape(ShapeType type);
+	void toCircle(float radius);
+	void toRectangle(float width, float height);
+	void setColor(sf::Color color);
 };
 template<class T> std::shared_ptr<T> ShapeRenderComponent::getShape() {
 	return std::static_pointer_cast<T>(m_shape);
