@@ -14,9 +14,11 @@ public:
 	GameSystem();
 	void loadConfig();
 	void applyConfig();
+	void resetGame();
 	void run();
 	void handleUserInput();
 	void transform();
 	void collisionCheck();
 	void render();
+
 };

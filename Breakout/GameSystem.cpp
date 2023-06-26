@@ -15,17 +15,28 @@ void GameSystem::applyConfig() {
 
 }
 
-void GameSystem::run(){
-    loadConfig();
-    applyConfig();
-
+void GameSystem::resetGame() {
     auto entity = m_entityManager->addEntity();
     auto shapeComp = entity->addComponent<ShapeRenderComponent>();
     shapeComp->getShape<sf::RectangleShape>()->setFillColor(sf::Color::Green);
     auto TComp = entity->addComponent<TransformationComponent>();
     TComp->velocity.set(1.0f, 1.0f);
-  
-   
+    auto player = m_entityManager->addEntity();
+    player->addComponent<PlayerInputComponent>();
+    player->addComponent<TransformationComponent>();
+    auto playerShape = player->addComponent<ShapeRenderComponent>()->getShape<sf::RectangleShape>();
+    playerShape->setFillColor(sf::Color::Blue);
+    playerShape->setSize({ 100, 30 });
+
+
+
+}
+
+void GameSystem::run(){
+    loadConfig();
+    applyConfig();
+    resetGame();
+
     while (window.isOpen())
     {   
         if (!m_pause) {
@@ -53,22 +64,59 @@ void GameSystem::handleUserInput(){
             if (event.key.code == sf::Keyboard::P) {
                 m_pause = !m_pause;
             }
+            if (event.key.code == sf::Keyboard::Left) {
+                for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
+                    auto component = entity->getComponent<PlayerInputComponent>();
+                    component->isMovingLeft = true;
+                }
+            }
+            if (event.key.code == sf::Keyboard::Right) {
+                for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
+                    auto component = entity->getComponent<PlayerInputComponent>();
+                    component->isMovingRight = true;
+                }
+            }
         }
-        
+        if (event.type == sf::Event::KeyReleased) {
+            if (event.key.code == sf::Keyboard::Left) {
+                for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
+                    auto component = entity->getComponent<PlayerInputComponent>();
+                    component->isMovingLeft = false;
+                }
+            }
+            if (event.key.code == sf::Keyboard::Right) {
+                for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
+                    auto component = entity->getComponent<PlayerInputComponent>();
+                    component->isMovingRight = false;
+                }
+            }
+        }
     }
 }
 void GameSystem::transform(){
-    for (auto entity : m_entityManager->getEntities(ComponentType::TRANSFORMATION)) {
+
+    for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
+        auto PIComponent = entity->getComponent<PlayerInputComponent>();
+        auto TComponent = entity->getComponent<TransformationComponent>();
+        TComponent->acceleration.set(0, 0);
+        if (PIComponent->isMovingLeft) {
+            TComponent->acceleration.x -= 0.1f;
+        }
+        if (PIComponent->isMovingRight) {
+            TComponent->acceleration.x += 0.1f;
+        }
+    }
+
+    for (auto& entity : m_entityManager->getEntities(ComponentType::TRANSFORMATION)) {
         auto component = entity->getComponent<TransformationComponent>();
         component->velocity += component->acceleration;
         component->position += component->velocity;
     }
-
 }
 void GameSystem::collisionCheck(){}
 void GameSystem::render(){
     window.clear();
-    for (auto entity : m_entityManager->getEntities(ComponentType::SHAPE_RENDER)) {
+    for (auto& entity : m_entityManager->getEntities(ComponentType::SHAPE_RENDER)) {
         auto shape = entity->getComponent<ShapeRenderComponent>();
         const auto& position = entity->getComponent<TransformationComponent>()->position;
         if (shape->getShapeType() == ShapeType::RECTANGLE) {
