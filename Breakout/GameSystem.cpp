@@ -4,7 +4,7 @@ GameSystem::GameSystem()
     : m_entityManager(std::shared_ptr<EntityManager>(new EntityManager()))
     , window(sf::RenderWindow(sf::VideoMode(1280, 720), "SFML works!"))
 {
-    window.setFramerateLimit(60);
+    window.setFramerateLimit(m_frameRate);
 }
 
 void GameSystem::loadConfig() {
@@ -24,11 +24,9 @@ void GameSystem::resetGame() {
     auto player = m_entityManager->addEntity();
     player->addComponent<PlayerInputComponent>();
     player->addComponent<TransformationComponent>();
-    auto playerShape = player->addComponent<ShapeRenderComponent>()->getShape<sf::RectangleShape>();
-    playerShape->setFillColor(sf::Color::Blue);
-    playerShape->setSize({ 100, 30 });
-
-
+    auto playerShape = player->addComponent<ShapeRenderComponent>();
+    playerShape->toCircle(10.f);
+    playerShape->getShape<sf::RectangleShape>()->setFillColor(sf::Color::Blue);
 
 }
 
@@ -36,13 +34,12 @@ void GameSystem::run(){
     loadConfig();
     applyConfig();
     resetGame();
-
     while (window.isOpen())
     {   
         if (!m_pause) {
             m_entityManager->update();
             handleUserInput();
-            transform();
+            transform(m_frameDelay);
             collisionCheck();
         }
         else {
@@ -93,25 +90,28 @@ void GameSystem::handleUserInput(){
         }
     }
 }
-void GameSystem::transform(){
-
+void GameSystem::transform(float timeStep){
+ 
     for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
         auto PIComponent = entity->getComponent<PlayerInputComponent>();
         auto TComponent = entity->getComponent<TransformationComponent>();
         TComponent->acceleration.set(0, 0);
         if (PIComponent->isMovingLeft) {
-            TComponent->acceleration.x -= 0.1f;
+            TComponent->acceleration.x -= 0.1f * timeStep;
         }
         if (PIComponent->isMovingRight) {
-            TComponent->acceleration.x += 0.1f;
+            TComponent->acceleration.x += 0.1f * timeStep;
         }
+
     }
 
     for (auto& entity : m_entityManager->getEntities(ComponentType::TRANSFORMATION)) {
         auto component = entity->getComponent<TransformationComponent>();
-        component->velocity += component->acceleration;
-        component->position += component->velocity;
+        component->velocity += component->acceleration * timeStep;
+        component->position += component->velocity * timeStep;
     }
+
+
 }
 void GameSystem::collisionCheck(){}
 void GameSystem::render(){
