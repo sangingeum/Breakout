@@ -10,6 +10,7 @@ void EntityManager::update() {
 			m_entityMap[type].push_back(entity);
 		}
 	}
+	m_toAdd.clear();
 	//Remove
 	// TODO
 }
@@ -18,11 +19,8 @@ size_t EntityManager::getNextID() {
 	return m_entityID++;
 }
 
-std::shared_ptr<Entity> EntityManager::addEntity(std::vector<ComponentType> componentTypes) {
+std::shared_ptr<Entity> EntityManager::addEntity() {
 	auto entity = std::shared_ptr<Entity>(new Entity(getNextID()));
-	for (auto type : componentTypes) {
-		entity->addComponent(type);
-	}
 	m_toAdd.push_back(entity);
 	return entity;
 }
