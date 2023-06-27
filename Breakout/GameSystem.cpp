@@ -1,9 +1,10 @@
 #include "GameSystem.hpp"
 #include <iostream>
 #include <format>
+#include <random>
 GameSystem::GameSystem()
     : m_entityManager(std::shared_ptr<EntityManager>(new EntityManager()))
-    , window(sf::RenderWindow(sf::VideoMode(config.width, config.height), "SFML works!"))
+    , window(sf::RenderWindow(sf::VideoMode(config.width, config.height), "Breakout SanginGeum"))
 {
     window.setFramerateLimit(config.fps);
 }
@@ -441,7 +442,11 @@ void GameSystem::spawnBall(float x, float y, float radius) {
     collisionC->halfWidth = radius;
     auto transformC = entity->addComponent<TransformationComponent>();
     transformC->position.set(x, y);
-    transformC->velocity.set(0, 3);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
+    float randomFloat = distribution(gen);
+    transformC->velocity = Vec2(randomFloat, 3.f).resize(4.f);
 }
 
 void GameSystem::spawnInvisibleWall(float x, float y, float width, float height) {
