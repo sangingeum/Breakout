@@ -15,11 +15,20 @@ class GameSystem {
 	void spawnBlock(float x, float y, float width, float height, bool breakable, sf::Color color);
 	void spawnPlayer(float x, float y, float width, float height);
 	void spawnBall(float x, float y, float radius);
+	void spawnInvisibleWall(float x, float y, float width, float height);
 	bool checkCollision(const std::shared_ptr<CollisionComponent>& collisionA,
 		const std::shared_ptr<CollisionComponent>& collisionB,
 		const std::shared_ptr<TransformationComponent>& transformA,
 		const std::shared_ptr<TransformationComponent>& transformB);
 	void resolveCollision(std::shared_ptr<CollisionComponent>& collisionA,
+		 std::shared_ptr<CollisionComponent>& collisionB,
+		 std::shared_ptr<TransformationComponent>& transformA,
+		 std::shared_ptr<TransformationComponent>& transformB);
+	void resolveCollisionCircleRect(std::shared_ptr<CollisionComponent>& collisionCircle,
+		std::shared_ptr<CollisionComponent>& collisionRect,
+		std::shared_ptr<TransformationComponent>& transformCircle,
+		std::shared_ptr<TransformationComponent>& transformRect);
+	void resolveCollisionAABB( std::shared_ptr<CollisionComponent>& collisionA,
 		 std::shared_ptr<CollisionComponent>& collisionB,
 		 std::shared_ptr<TransformationComponent>& transformA,
 		 std::shared_ptr<TransformationComponent>& transformB);

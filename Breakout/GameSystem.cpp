@@ -17,6 +17,7 @@ void GameSystem::applyConfig() {
 }
 
 void GameSystem::resetGame() {
+
     unsigned col = 15, row = 10;
     float blockProportionH = 0.6f, blockProportionW = 0.95f;
     float width = (config.width * (blockProportionW-0.1f))/ col;
@@ -32,8 +33,13 @@ void GameSystem::resetGame() {
         }
     }
     float playerX = config.width / 2.0f, playerY = config.height * 0.9f;
+    //spawn player & ball
     spawnPlayer(playerX, playerY, width*2.0f, height);
     spawnBall(playerX, (playerY + config.height * blockProportionH) / 2.0f, 10.f);
+    //spawn walls
+    spawnInvisibleWall(-50.f, config.height / 2.f, 100.f, config.height); // left wall
+    spawnInvisibleWall(config.width + 50.f, config.height / 2.f, 100.f, config.height); // right wall
+    spawnInvisibleWall(config.width / 2.f, -50.f, config.width + 200.f, 100.f); // upper wall
 }
 
 void GameSystem::run(){
@@ -67,52 +73,54 @@ void GameSystem::handleUserInput(){
             if (event.key.code == sf::Keyboard::P) {
                 m_pause = !m_pause;
             }
+            auto& playerInputEntities = m_entityManager->getEntities(ComponentType::PLAYER_INPUT);
             if (event.key.code == sf::Keyboard::Left) {
-                for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
+                for (auto& entity : playerInputEntities) {
                     auto component = entity->getComponent<PlayerInputComponent>();
                     component->isMovingLeft = true;
                 }
             }
             if (event.key.code == sf::Keyboard::Right) {
-                for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
+                for (auto& entity : playerInputEntities) {
                     auto component = entity->getComponent<PlayerInputComponent>();
                     component->isMovingRight = true;
                 }
             }
             if (event.key.code == sf::Keyboard::Up) {
-                for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
+                for (auto& entity : playerInputEntities) {
                     auto component = entity->getComponent<PlayerInputComponent>();
                     component->isMovingUp = true;
                 }
             }
             if (event.key.code == sf::Keyboard::Down) {
-                for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
+                for (auto& entity : playerInputEntities) {
                     auto component = entity->getComponent<PlayerInputComponent>();
                     component->isMovingDown = true;
                 }
             }
         }
         if (event.type == sf::Event::KeyReleased) {
+            auto& playerInputEntities = m_entityManager->getEntities(ComponentType::PLAYER_INPUT);
             if (event.key.code == sf::Keyboard::Left) {
-                for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
+                for (auto& entity : playerInputEntities) {
                     auto component = entity->getComponent<PlayerInputComponent>();
                     component->isMovingLeft = false;
                 }
             }
             if (event.key.code == sf::Keyboard::Right) {
-                for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
+                for (auto& entity : playerInputEntities) {
                     auto component = entity->getComponent<PlayerInputComponent>();
                     component->isMovingRight = false;
                 }
             }
             if (event.key.code == sf::Keyboard::Up) {
-                for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
+                for (auto& entity : playerInputEntities) {
                     auto component = entity->getComponent<PlayerInputComponent>();
                     component->isMovingUp = false;
                 }
             }
             if (event.key.code == sf::Keyboard::Down) {
-                for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
+                for (auto& entity : playerInputEntities) {
                     auto component = entity->getComponent<PlayerInputComponent>();
                     component->isMovingDown = false;
                 }
@@ -218,7 +226,7 @@ bool GameSystem::checkCollision(const std::shared_ptr<CollisionComponent>& colli
         // outer space
         if (delta.x > halfWidth + radius) return false;
         if (delta.y > halfHeight + radius) return false;
-        // innter space
+        // inner space
         if (delta.x < halfWidth) return true;
         if (delta.y < halfHeight) return true;
         // corner case
@@ -227,46 +235,141 @@ bool GameSystem::checkCollision(const std::shared_ptr<CollisionComponent>& colli
         return cornerDist < radius * radius;
     }
 }
+
+void GameSystem::resolveCollisionCircleRect(std::shared_ptr<CollisionComponent>& collisionCircle,
+    std::shared_ptr<CollisionComponent>& collisionRect,
+    std::shared_ptr<TransformationComponent>& transformCircle,
+    std::shared_ptr<TransformationComponent>& transformRect) {
+    // only circle moves
+    if (!collisionCircle->doNotMoveWhenCollide) {
+        if (collisionCircle->bouncible) {
+            Vec2& posC = transformCircle->position;
+            Vec2& velC = transformCircle->velocity;
+            Vec2& posR = transformRect->position;
+            Vec2 delta = posC.delta(posR);
+            float halfWidth = collisionRect->halfWidth, halfHeight = collisionRect->halfHeight;
+            float radius = collisionCircle->halfWidth;
+            // inner space
+            if (delta.x < halfWidth) {
+                if (posC.y > posR.y) {
+                    posC.y += halfHeight + radius - delta.y;
+                }
+                else {
+                    posC.y -= halfHeight + radius - delta.y;
+                }
+                velC.y = -velC.y;
+                return;
+            }
+            if (delta.y < halfHeight) {
+                if (posC.x > posR.x) {
+                    posC.x += halfWidth + radius - delta.x;
+                }
+                else {
+                    posC.x -= halfWidth + radius - delta.x;
+                }
+                velC.x = -velC.x;
+                return;
+            }
+            //TODO
+            // corner case
+  
+            Vec2 corner({ halfWidth, halfHeight });
+            Vec2 cornerToCircleVec = delta - corner;
+            float distToMove = radius - cornerToCircleVec.length();
+            cornerToCircleVec.resize(distToMove);
+            if (posC.x < posR.x) {
+                cornerToCircleVec.x = -cornerToCircleVec.x;
+            }
+            if (posC.y < posR.y) {
+                cornerToCircleVec.y = -cornerToCircleVec.y;
+            }
+            posC += cornerToCircleVec;
+            velC = cornerToCircleVec.resize(velC.length());
+            return;
+
+        }
+    }
+    else {
+        //TODO
+    }
+
+}
+
+void GameSystem::resolveCollisionAABB(std::shared_ptr<CollisionComponent>& collisionA,
+    std::shared_ptr<CollisionComponent>& collisionB,
+    std::shared_ptr<TransformationComponent>& transformA,
+    std::shared_ptr<TransformationComponent>& transformB) {
+    if (!collisionA->doNotMoveWhenCollide) {
+        if (collisionA->bouncible) {
+            // TODO
+            transformA->velocity.negate();
+            transformA->acceleration.negate();
+        }
+        else {
+            if (!collisionB->breakable) {
+                Vec2& posA = transformA->position;
+                Vec2& posB = transformB->position;
+                Vec2 delta = posA.delta(posB);
+                float overlapX = collisionA->halfWidth + collisionB->halfWidth - delta.x;
+                float overlapY = collisionA->halfHeight + collisionB->halfHeight - delta.y;
+                if (overlapX < overlapY) {
+                    if (posA.x > posB.x) {
+                        posA.x += overlapX;
+                    }
+                    else {
+                        posA.x -= overlapX;
+                    }
+                    transformA->velocity.x = 0.f;
+                    transformA->acceleration.x = 0.f;
+                }
+                else {
+                    if (overlapY > 0) {
+                        if (posA.y > posB.y) {
+                            posA.y += overlapY;
+                        }
+                        else {
+                            posA.y -= overlapY;
+                        }
+                    }
+                    transformA->velocity.y = 0.f;
+                    transformA->acceleration.y = 0.f;
+                }
+            }
+        }
+    }
+}
+
 void GameSystem::resolveCollision(std::shared_ptr<CollisionComponent>& collisionA,
     std::shared_ptr<CollisionComponent>& collisionB,
     std::shared_ptr<TransformationComponent>& transformA,
     std::shared_ptr<TransformationComponent>& transformB) {
     // TODO
     
-    Vec2 fromAtoB = (transformB->position - transformA->position).normalize();
-
     //circle to circle or rect to rect
     if (collisionA->type == collisionB->type) {
         // rect to rect, AABB
         if (collisionA->type == CollisionBoxType::RECTANGLE) {
-            if (!collisionA->doNotMoveWhenCollide) {
-                if (collisionA->bouncible) {
-                    transformA->velocity.negate();
-                }
-            }
-            if (!collisionB->doNotMoveWhenCollide) {
-                if (collisionB->bouncible) {
-                    transformB->velocity.negate();
-                }
-            }
+            // changes A
+            resolveCollisionAABB(collisionA, collisionB, transformA, transformB);
+            // changes B
+            resolveCollisionAABB(collisionB, collisionA, transformB, transformA);
         }
         // circle to circle
         else {
-
+            // TODO
+            // doesn't need to implement yet.
         }
     }
     // circle to rect
     else {
-        if (!collisionA->doNotMoveWhenCollide) {
-            if (collisionA->bouncible) {
-                transformA->velocity.negate();
-            }
+        // TODO
+        if (collisionA->type == CollisionBoxType::RECTANGLE) {
+            resolveCollisionCircleRect(collisionB, collisionA, transformB, transformA);
         }
-        if (!collisionB->doNotMoveWhenCollide) {
-            if (collisionB->bouncible) {
-                transformB->velocity.negate();
-            }
+        else {
+            resolveCollisionCircleRect(collisionA, collisionB, transformA, transformB);
         }
+        
     }
 
 }
@@ -339,4 +442,17 @@ void GameSystem::spawnBall(float x, float y, float radius) {
     auto transformC = entity->addComponent<TransformationComponent>();
     transformC->position.set(x, y);
     transformC->velocity.set(0, 3);
+}
+
+void GameSystem::spawnInvisibleWall(float x, float y, float width, float height) {
+    auto entity = m_entityManager->addEntity();
+    auto collisionC = entity->addComponent<CollisionComponent>();
+    collisionC->breakable = false;
+    collisionC->bouncible = false;
+    collisionC->doNotMoveWhenCollide = true;
+    collisionC->type = CollisionBoxType::RECTANGLE;
+    collisionC->halfHeight = height / 2.f;
+    collisionC->halfWidth = width / 2.f;
+    auto transformC = entity->addComponent<TransformationComponent>();
+    transformC->position.set(x, y);
 }
