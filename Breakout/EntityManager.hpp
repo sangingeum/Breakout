@@ -9,6 +9,7 @@ class EntityManager {
 	std::unordered_map<ComponentType, std::vector<std::shared_ptr<Entity>>> m_entityMap;
 	std::vector<std::shared_ptr<Entity>> m_toAdd;
 	size_t m_entityID = 0;
+	void removeDestroyedEntities(std::vector<std::shared_ptr<Entity>>& entityList);
 public:
 	EntityManager();
 	void update();

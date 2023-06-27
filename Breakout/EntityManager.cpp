@@ -12,7 +12,16 @@ void EntityManager::update() {
 	}
 	m_toAdd.clear();
 	//Remove
-	// TODO
+	for (auto& [type, entityList] : m_entityMap) {
+		removeDestroyedEntities(entityList);
+	}
+	removeDestroyedEntities(m_entities);
+}
+
+void EntityManager::removeDestroyedEntities(std::vector<std::shared_ptr<Entity>>& entityList) {
+	entityList.erase(std::remove_if(entityList.begin(), entityList.end(),
+		[](const std::shared_ptr<Entity>& entity) {return entity->isDestroyed(); }),
+		entityList.end());
 }
 
 size_t EntityManager::getNextID() {
