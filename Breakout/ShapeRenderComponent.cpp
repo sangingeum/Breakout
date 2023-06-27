@@ -27,3 +27,8 @@ void ShapeRenderComponent::toRectangle(float width, float height) {
 void ShapeRenderComponent::setColor(sf::Color color) {
 	m_shape->setFillColor(color);
 }
+
+void ShapeRenderComponent::setOutlineColor(sf::Color color) {
+	m_shape->setOutlineColor(color);
+	m_shape->setOutlineThickness(2.0f);
+}
