@@ -19,6 +19,7 @@ public:
 	Entity() = delete;
 	Entity(size_t id);
 	void destroy();
+	bool isDestroyed();
 	size_t getId();
 	template <class T> std::shared_ptr<T> addComponent();
 	template <class T> std::shared_ptr<T> getComponent();

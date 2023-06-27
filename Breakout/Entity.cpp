@@ -6,6 +6,9 @@ Entity::Entity(size_t id)
 void Entity::destroy() {
 	m_toDestroy = true;
 }
+bool Entity::isDestroyed() {
+	return m_toDestroy;
+}
 size_t Entity::getId() {
 	return m_id;
 }
