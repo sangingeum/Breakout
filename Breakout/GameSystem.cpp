@@ -1,5 +1,6 @@
 #include "GameSystem.hpp"
 #include <iostream>
+#include <format>
 GameSystem::GameSystem()
     : m_entityManager(std::shared_ptr<EntityManager>(new EntityManager()))
     , window(sf::RenderWindow(sf::VideoMode(config.width, config.height), "SFML works!"))
@@ -78,6 +79,18 @@ void GameSystem::handleUserInput(){
                     component->isMovingRight = true;
                 }
             }
+            if (event.key.code == sf::Keyboard::Up) {
+                for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
+                    auto component = entity->getComponent<PlayerInputComponent>();
+                    component->isMovingUp = true;
+                }
+            }
+            if (event.key.code == sf::Keyboard::Down) {
+                for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
+                    auto component = entity->getComponent<PlayerInputComponent>();
+                    component->isMovingDown = true;
+                }
+            }
         }
         if (event.type == sf::Event::KeyReleased) {
             if (event.key.code == sf::Keyboard::Left) {
@@ -90,6 +103,18 @@ void GameSystem::handleUserInput(){
                 for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
                     auto component = entity->getComponent<PlayerInputComponent>();
                     component->isMovingRight = false;
+                }
+            }
+            if (event.key.code == sf::Keyboard::Up) {
+                for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
+                    auto component = entity->getComponent<PlayerInputComponent>();
+                    component->isMovingUp = false;
+                }
+            }
+            if (event.key.code == sf::Keyboard::Down) {
+                for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
+                    auto component = entity->getComponent<PlayerInputComponent>();
+                    component->isMovingDown = false;
                 }
             }
         }
@@ -107,6 +132,12 @@ void GameSystem::transform(float timeStep){
         if (PIComponent->isMovingRight) {
             TComponent->acceleration.x = std::min(TComponent->acceleration.x + 0.01f * timeStep, 0.15f);
         }
+        if (PIComponent->isMovingUp) {
+            TComponent->acceleration.y = std::max(TComponent->acceleration.y - 0.01f * timeStep, -0.15f);
+        }
+        if (PIComponent->isMovingDown) {
+            TComponent->acceleration.y = std::min(TComponent->acceleration.y + 0.01f * timeStep, 0.15f);
+        }
         //slow down player
         TComponent->acceleration.scale(std::powf(0.95f, timeStep));
         TComponent->velocity.scale(std::powf(0.99f, timeStep));
@@ -115,7 +146,6 @@ void GameSystem::transform(float timeStep){
 
     for (auto& entity : m_entityManager->getEntities(ComponentType::TRANSFORMATION)) {
         auto component = entity->getComponent<TransformationComponent>();
-
         component->velocity += component->acceleration * timeStep;
         component->position += component->velocity * timeStep;
     }
@@ -197,30 +227,69 @@ bool GameSystem::checkCollision(const std::shared_ptr<CollisionComponent>& colli
         return cornerDist < radius * radius;
     }
 }
+void GameSystem::resolveCollision(std::shared_ptr<CollisionComponent>& collisionA,
+    std::shared_ptr<CollisionComponent>& collisionB,
+    std::shared_ptr<TransformationComponent>& transformA,
+    std::shared_ptr<TransformationComponent>& transformB) {
+    // TODO
+    
+    Vec2 fromAtoB = (transformB->position - transformA->position).normalize();
 
+    //circle to circle or rect to rect
+    if (collisionA->type == collisionB->type) {
+        // rect to rect, AABB
+        if (collisionA->type == CollisionBoxType::RECTANGLE) {
+            if (!collisionA->doNotMoveWhenCollide) {
+                if (collisionA->bouncible) {
+                    transformA->velocity.negate();
+                }
+            }
+            if (!collisionB->doNotMoveWhenCollide) {
+                if (collisionB->bouncible) {
+                    transformB->velocity.negate();
+                }
+            }
+        }
+        // circle to circle
+        else {
+
+        }
+    }
+    // circle to rect
+    else {
+        if (!collisionA->doNotMoveWhenCollide) {
+            if (collisionA->bouncible) {
+                transformA->velocity.negate();
+            }
+        }
+        if (!collisionB->doNotMoveWhenCollide) {
+            if (collisionB->bouncible) {
+                transformB->velocity.negate();
+            }
+        }
+    }
+
+}
 void GameSystem::checkPhysics() {
     // TODO
-    for (auto& entityA : m_entityManager->getEntities(ComponentType::COLLISION)) {
-        for (auto& entityB : m_entityManager->getEntities(ComponentType::COLLISION)) {
-            if (entityA->getId() != entityB->getId()) {
-                auto collisionA = entityA->getComponent<CollisionComponent>();
-                auto collisionB = entityB->getComponent<CollisionComponent>();
-                auto transformA = entityA->getComponent<TransformationComponent>();
-                auto transformB = entityB->getComponent<TransformationComponent>();
-                if (checkCollision(collisionA, collisionB, transformA, transformB)) {
-                    if (collisionA->breakable) {
-                        entityA->destroy();
-                    }
-                    else if(collisionA->bouncible){
-                        
-                    }
-                    if (collisionB->breakable) {
-                        entityB->destroy();
-                    }
-                    else if (collisionB->bouncible) {
-
-                    }
+    auto& entityList = m_entityManager->getEntities(ComponentType::COLLISION);
+    size_t entityListSize = entityList.size();
+    for (size_t i = 0; i < entityListSize; ++i) {
+        for (size_t j = i+1; j < entityListSize; ++j) {
+            auto& entityA = entityList[i];
+            auto& entityB = entityList[j];
+            auto collisionA = entityA->getComponent<CollisionComponent>();
+            auto collisionB = entityB->getComponent<CollisionComponent>();
+            auto transformA = entityA->getComponent<TransformationComponent>();
+            auto transformB = entityB->getComponent<TransformationComponent>();
+            if (checkCollision(collisionA, collisionB, transformA, transformB)) {
+                if (collisionA->breakable) {
+                    entityA->destroy();
                 }
+                if (collisionB->breakable) {
+                    entityB->destroy();
+                }
+                resolveCollision(collisionA, collisionB, transformA, transformB);
             }
         }
     }
@@ -234,23 +303,25 @@ void GameSystem::spawnBlock(float x, float y, float width, float height, bool br
     shapeC->setColor(color);
     auto collisionC = entity->addComponent<CollisionComponent>();
     collisionC->breakable = breakable;
-    collisionC->halfHeight = width/2.f;
-    collisionC->halfWidth = height/2.f;
+    collisionC->halfHeight = height /2.f;
+    collisionC->halfWidth = width / 2.f;
+    collisionC->doNotMoveWhenCollide = true;
     auto transformC = entity->addComponent<TransformationComponent>();
     transformC->position.set(x, y);
     transformC->velocity.set(0.0f, 0.0f);
 }
 void GameSystem::spawnPlayer(float x, float y, float width, float height) {
     auto entity = m_entityManager->addEntity();
-    entity->addComponent<PlayerInputComponent>();
+    auto inputC = entity->addComponent<PlayerInputComponent>();
+    inputC->leftRightMode = false;
     auto shapeC = entity->addComponent<ShapeRenderComponent>();
     shapeC->toRectangle(width, height);
     shapeC->setColor(sf::Color(200, 200, 200));
     shapeC->setOutlineColor(sf::Color(255, 255, 255));
     auto collisionC = entity->addComponent<CollisionComponent>();
     collisionC->breakable = false;
-    collisionC->halfHeight = width/2.f;
-    collisionC->halfWidth = height/2.f;
+    collisionC->halfHeight = height / 2.f;
+    collisionC->halfWidth = width / 2.f;
     auto transformC = entity->addComponent<TransformationComponent>();
     transformC->position.set(x, y);
 }

@@ -12,6 +12,7 @@ public:
 	float halfHeight = 1.0f;
 	bool breakable = true;
 	bool bouncible = false;
+	bool doNotMoveWhenCollide = false;
 	CollisionBoxType type = CollisionBoxType::RECTANGLE;
 	CollisionComponent() = default;
 };

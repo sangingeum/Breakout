@@ -19,6 +19,10 @@ class GameSystem {
 		const std::shared_ptr<CollisionComponent>& collisionB,
 		const std::shared_ptr<TransformationComponent>& transformA,
 		const std::shared_ptr<TransformationComponent>& transformB);
+	void resolveCollision(std::shared_ptr<CollisionComponent>& collisionA,
+		 std::shared_ptr<CollisionComponent>& collisionB,
+		 std::shared_ptr<TransformationComponent>& transformA,
+		 std::shared_ptr<TransformationComponent>& transformB);
 	void loadConfig();
 	void applyConfig();
 	void resetGame();
