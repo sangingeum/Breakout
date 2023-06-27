@@ -7,6 +7,9 @@ Vec2::Vec2(float xin, float yin) : x(xin), y(yin) {}
 Vec2 Vec2::operator+(const Vec2& rhs) const {
     return Vec2(this->x + rhs.x, this->y + rhs.y);
 }
+Vec2 Vec2::operator-(const Vec2& rhs) const {
+    return Vec2(this->x - rhs.x, this->y - rhs.y);
+}
 Vec2 Vec2::operator*(const Vec2& rhs) const {
     return Vec2(this->x * rhs.x, this->y * rhs.y);
 }
@@ -79,4 +82,9 @@ float Vec2::length() const {
 void Vec2::set(float xin, float yin) {
     x = xin;
     y = yin;
+}
+
+void Vec2::negate() {
+    x = -x;
+    y = -y;
 }
