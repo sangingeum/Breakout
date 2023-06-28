@@ -3,7 +3,11 @@
 #include <SFML/Graphics.hpp>
 #include <memory>
 
-struct Config { int width = 1280, height = 720, fps = 144; };
+struct Config { 
+	int width = 1280, height = 720, fps = 144;
+	float initialBallSpeed = 4.0f, ballSpeedIncrement=0.005f,
+		maxBallSpeed = 15.f, playerSpeed = 15.f;
+};
 
 
 class GameSystem {
@@ -12,6 +16,7 @@ class GameSystem {
 	sf::RenderWindow window;
 	float m_frameDelay = 60.0f / config.fps;
 	bool m_pause = false;
+	int m_score = 0;
 	void spawnBlock(float x, float y, float width, float height, bool breakable, sf::Color color);
 	void spawnPlayer(float x, float y, float width, float height);
 	void spawnBall(float x, float y, float radius);
@@ -32,12 +37,11 @@ class GameSystem {
 		 std::shared_ptr<CollisionComponent>& collisionB,
 		 std::shared_ptr<TransformationComponent>& transformA,
 		 std::shared_ptr<TransformationComponent>& transformB);
-	void loadConfig();
-	void applyConfig();
 	void resetGame();
 	void handleUserInput();
 	void transform(float timeStep);
 	void checkPhysics();
+	void checkGameLogic();
 	void render();
 public:
 	GameSystem();

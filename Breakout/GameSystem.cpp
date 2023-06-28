@@ -9,43 +9,36 @@ GameSystem::GameSystem()
     window.setFramerateLimit(config.fps);
 }
 
-void GameSystem::loadConfig() {
-
-}
-
-void GameSystem::applyConfig() {
-
-}
-
 void GameSystem::resetGame() {
-
-    unsigned col = 15, row = 10;
+    m_entityManager->clear();
+    m_score = 0;
+    unsigned col = 15, row = 20;
     float blockProportionH = 0.6f, blockProportionW = 0.95f;
     float width = (config.width * (blockProportionW-0.1f))/ col;
     float height = (config.height * (blockProportionH-0.1f))/ row;
     float wDiff = (config.width * (1.0f - blockProportionW) + width) / 2.0f;
     float hDiff = height;
+    float hStart = config.height * (1.f - blockProportionH) / 4.f;
     unsigned colorAdder = 255 / row;
     for (size_t i = 0; i < col; i++) {
         for (size_t j = 0; j < row; j++) {
             spawnBlock((config.width * blockProportionW / col)*i + wDiff,
-                (config.height * blockProportionH / (row)) * j + hDiff,
+                (config.height * blockProportionH / (row)) * j + hDiff + hStart,
                 width, height, true, sf::Color(colorAdder * j, 255 - colorAdder * j, 255));
         }
     }
     float playerX = config.width / 2.0f, playerY = config.height * 0.9f;
     //spawn player & ball
-    spawnPlayer(playerX, playerY, width*2.0f, height);
+    spawnPlayer(playerX, playerY, width*2.0f, height/2.f);
     spawnBall(playerX, (playerY + config.height * blockProportionH) / 2.0f, 10.f);
     //spawn walls
     spawnInvisibleWall(-50.f, config.height / 2.f, 100.f, config.height); // left wall
     spawnInvisibleWall(config.width + 50.f, config.height / 2.f, 100.f, config.height); // right wall
     spawnInvisibleWall(config.width / 2.f, -50.f, config.width + 200.f, 100.f); // upper wall
+
 }
 
 void GameSystem::run(){
-    loadConfig();
-    applyConfig();
     resetGame();
     while (window.isOpen())
     {   
@@ -54,6 +47,7 @@ void GameSystem::run(){
             handleUserInput();
             transform(m_frameDelay);
             checkPhysics();
+            checkGameLogic();
         }
         else {
             m_entityManager->update();
@@ -74,6 +68,9 @@ void GameSystem::handleUserInput(){
             if (event.key.code == sf::Keyboard::P) {
                 m_pause = !m_pause;
             }
+            if (event.key.code == sf::Keyboard::R) {
+                resetGame();
+            }
             auto& playerInputEntities = m_entityManager->getEntities(ComponentType::PLAYER_INPUT);
             if (event.key.code == sf::Keyboard::Left) {
                 for (auto& entity : playerInputEntities) {
@@ -90,13 +87,15 @@ void GameSystem::handleUserInput(){
             if (event.key.code == sf::Keyboard::Up) {
                 for (auto& entity : playerInputEntities) {
                     auto component = entity->getComponent<PlayerInputComponent>();
-                    component->isMovingUp = true;
+                    if(!component->leftRightMode)
+                        component->isMovingUp = true;
                 }
             }
             if (event.key.code == sf::Keyboard::Down) {
                 for (auto& entity : playerInputEntities) {
                     auto component = entity->getComponent<PlayerInputComponent>();
-                    component->isMovingDown = true;
+                    if (!component->leftRightMode)
+                        component->isMovingDown = true;
                 }
             }
         }
@@ -117,13 +116,15 @@ void GameSystem::handleUserInput(){
             if (event.key.code == sf::Keyboard::Up) {
                 for (auto& entity : playerInputEntities) {
                     auto component = entity->getComponent<PlayerInputComponent>();
-                    component->isMovingUp = false;
+                    if (!component->leftRightMode)
+                        component->isMovingUp = false;
                 }
             }
             if (event.key.code == sf::Keyboard::Down) {
                 for (auto& entity : playerInputEntities) {
                     auto component = entity->getComponent<PlayerInputComponent>();
-                    component->isMovingDown = false;
+                    if (!component->leftRightMode)
+                        component->isMovingDown = false;
                 }
             }
         }
@@ -134,21 +135,35 @@ void GameSystem::transform(float timeStep){
     for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
         auto PIComponent = entity->getComponent<PlayerInputComponent>();
         auto TComponent = entity->getComponent<TransformationComponent>();
-        //TComponent->acceleration.set(0, 0);
-        if (PIComponent->isMovingLeft) {
-            TComponent->acceleration.x = std::max(TComponent->acceleration.x - 0.01f * timeStep, -0.15f);
+        TComponent->velocity.set(0, 0);
+        /*
+        * if (PIComponent->isMovingLeft) {
+            TComponent->acceleration.x = std::max(TComponent->acceleration.x - 0.01f * timeStep, -0.3f);
         }
         if (PIComponent->isMovingRight) {
-            TComponent->acceleration.x = std::min(TComponent->acceleration.x + 0.01f * timeStep, 0.15f);
+            TComponent->acceleration.x = std::min(TComponent->acceleration.x + 0.01f * timeStep, 0.3f);
         }
         if (PIComponent->isMovingUp) {
-            TComponent->acceleration.y = std::max(TComponent->acceleration.y - 0.01f * timeStep, -0.15f);
+            TComponent->acceleration.y = std::max(TComponent->acceleration.y - 0.01f * timeStep, -0.3f);
         }
         if (PIComponent->isMovingDown) {
-            TComponent->acceleration.y = std::min(TComponent->acceleration.y + 0.01f * timeStep, 0.15f);
+            TComponent->acceleration.y = std::min(TComponent->acceleration.y + 0.01f * timeStep, 0.3f);
+        }
+        */
+        if (PIComponent->isMovingLeft) {
+            TComponent->velocity.x = -config.playerSpeed;
+        }
+        if (PIComponent->isMovingRight) {
+            TComponent->velocity.x = config.playerSpeed;
+        }
+        if (PIComponent->isMovingUp) {
+            TComponent->velocity.y = config.playerSpeed;
+        }
+        if (PIComponent->isMovingDown) {
+            TComponent->velocity.y = -config.playerSpeed;
         }
         //slow down player
-        TComponent->acceleration.scale(std::powf(0.95f, timeStep));
+        //TComponent->acceleration.scale(std::powf(0.95f, timeStep));
         TComponent->velocity.scale(std::powf(0.99f, timeStep));
         //TComponent->velocity.x -= abs(TComponent->velocity.x) 0.01f * timeStep;
     }
@@ -273,7 +288,6 @@ void GameSystem::resolveCollisionCircleRect(std::shared_ptr<CollisionComponent>&
             }
             //TODO
             // corner case
-  
             Vec2 corner({ halfWidth, halfHeight });
             Vec2 cornerToCircleVec = delta - corner;
             float distToMove = radius - cornerToCircleVec.length();
@@ -389,16 +403,32 @@ void GameSystem::checkPhysics() {
             if (checkCollision(collisionA, collisionB, transformA, transformB)) {
                 if (collisionA->breakable) {
                     entityA->destroy();
+                    m_score += 100;
                 }
                 if (collisionB->breakable) {
                     entityB->destroy();
+                    m_score += 100;
                 }
                 resolveCollision(collisionA, collisionB, transformA, transformB);
             }
         }
     }
 }
+void GameSystem::checkGameLogic() {
+    auto& entityList = m_entityManager->getEntities(ComponentType::SHAPE_RENDER);
+    for (const auto& entity : entityList) {
+        if (entity->getComponent<ShapeRenderComponent>()->getShapeType() == ShapeType::CIRCLE) {
+            const auto& pos = entity->getComponent<TransformationComponent>()->position;
+            if (pos.y > config.height + 50) {
+                resetGame();
+                break;
+            }
+            auto& vel = entity->getComponent<TransformationComponent>()->velocity;
+            vel.resize(std::min(vel.length() + config.ballSpeedIncrement * m_frameDelay, config.maxBallSpeed));
+        }
+    }
 
+}
 
 void GameSystem::spawnBlock(float x, float y, float width, float height, bool breakable, sf::Color color) {
     auto entity = m_entityManager->addEntity();
@@ -417,7 +447,7 @@ void GameSystem::spawnBlock(float x, float y, float width, float height, bool br
 void GameSystem::spawnPlayer(float x, float y, float width, float height) {
     auto entity = m_entityManager->addEntity();
     auto inputC = entity->addComponent<PlayerInputComponent>();
-    inputC->leftRightMode = false;
+    inputC->leftRightMode = true;
     auto shapeC = entity->addComponent<ShapeRenderComponent>();
     shapeC->toRectangle(width, height);
     shapeC->setColor(sf::Color(200, 200, 200));
@@ -446,7 +476,7 @@ void GameSystem::spawnBall(float x, float y, float radius) {
     std::mt19937 gen(rd());
     std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
     float randomFloat = distribution(gen);
-    transformC->velocity = Vec2(randomFloat, 3.f).resize(4.f);
+    transformC->velocity = Vec2(randomFloat, 3.f).resize(config.initialBallSpeed);
 }
 
 void GameSystem::spawnInvisibleWall(float x, float y, float width, float height) {

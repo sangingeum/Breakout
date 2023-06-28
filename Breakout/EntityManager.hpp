@@ -13,6 +13,7 @@ class EntityManager {
 public:
 	EntityManager();
 	void update();
+	void clear();
 	size_t getNextID();
 	std::shared_ptr<Entity> addEntity();
 	std::vector<std::shared_ptr<Entity>>& getEntities();

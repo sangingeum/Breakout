@@ -18,6 +18,14 @@ void EntityManager::update() {
 	removeDestroyedEntities(m_entities);
 }
 
+void EntityManager::clear() {
+	m_entities.clear();
+	for (auto& [type, entityList] : m_entityMap) {
+		entityList.clear();
+	}
+	m_toAdd.clear();
+}
+
 void EntityManager::removeDestroyedEntities(std::vector<std::shared_ptr<Entity>>& entityList) {
 	entityList.erase(std::remove_if(entityList.begin(), entityList.end(),
 		[](const std::shared_ptr<Entity>& entity) {return entity->isDestroyed(); }),
@@ -28,6 +36,7 @@ size_t EntityManager::getNextID() {
 	return m_entityID++;
 }
 
+// delayed add - to avoid iterator invalidation
 std::shared_ptr<Entity> EntityManager::addEntity() {
 	auto entity = std::shared_ptr<Entity>(new Entity(getNextID()));
 	m_toAdd.push_back(entity);
