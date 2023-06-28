@@ -3,7 +3,8 @@
 ## Description
 This is a C++ game project which aims to recreate the classic Atari game, Breakout.    
 
-## Requirements 
+## Requirements
+To bulid this project, you need the following:
 * C++20
 * SFML library
 * Visual studio 2022 (with Game Development with C++ enabled)
