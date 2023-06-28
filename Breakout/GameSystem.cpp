@@ -136,20 +136,7 @@ void GameSystem::transform(float timeStep){
         auto PIComponent = entity->getComponent<PlayerInputComponent>();
         auto TComponent = entity->getComponent<TransformationComponent>();
         TComponent->velocity.set(0, 0);
-        /*
-        * if (PIComponent->isMovingLeft) {
-            TComponent->acceleration.x = std::max(TComponent->acceleration.x - 0.01f * timeStep, -0.3f);
-        }
-        if (PIComponent->isMovingRight) {
-            TComponent->acceleration.x = std::min(TComponent->acceleration.x + 0.01f * timeStep, 0.3f);
-        }
-        if (PIComponent->isMovingUp) {
-            TComponent->acceleration.y = std::max(TComponent->acceleration.y - 0.01f * timeStep, -0.3f);
-        }
-        if (PIComponent->isMovingDown) {
-            TComponent->acceleration.y = std::min(TComponent->acceleration.y + 0.01f * timeStep, 0.3f);
-        }
-        */
+
         if (PIComponent->isMovingLeft) {
             TComponent->velocity.x = -config.playerSpeed;
         }
@@ -162,18 +149,13 @@ void GameSystem::transform(float timeStep){
         if (PIComponent->isMovingDown) {
             TComponent->velocity.y = -config.playerSpeed;
         }
-        //slow down player
-        //TComponent->acceleration.scale(std::powf(0.95f, timeStep));
-        TComponent->velocity.scale(std::powf(0.99f, timeStep));
-        //TComponent->velocity.x -= abs(TComponent->velocity.x) 0.01f * timeStep;
     }
-
+    // apply acceleration and velocity
     for (auto& entity : m_entityManager->getEntities(ComponentType::TRANSFORMATION)) {
         auto component = entity->getComponent<TransformationComponent>();
         component->velocity += component->acceleration * timeStep;
         component->position += component->velocity * timeStep;
     }
-
 
 }
 
