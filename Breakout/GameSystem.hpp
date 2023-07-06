@@ -14,7 +14,6 @@ class GameSystem {
 	std::shared_ptr<EntityManager> m_entityManager;
 	Config config;
 	sf::RenderWindow window;
-	float m_frameDelay = 60.0f / config.fps;
 	bool m_pause = false;
 	int m_score = 0;
 	void spawnBlock(float x, float y, float width, float height, bool breakable, sf::Color color);
@@ -39,9 +38,9 @@ class GameSystem {
 		 std::shared_ptr<TransformationComponent>& transformB);
 	void resetGame();
 	void handleUserInput();
-	void transform(float timeStep);
+	void transform(float deltaTime);
 	void checkPhysics();
-	void checkGameLogic();
+	void checkGameLogic(float deltaTime);
 	void render();
 public:
 	GameSystem();

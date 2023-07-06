@@ -40,14 +40,16 @@ void GameSystem::resetGame() {
 
 void GameSystem::run(){
     resetGame();
+    sf::Clock clock;
     while (window.isOpen())
     {   
+        float deltaTime = clock.restart().asSeconds() * 60.f;
         if (!m_pause) {
             m_entityManager->update();
             handleUserInput();
-            transform(m_frameDelay);
+            transform(deltaTime);
             checkPhysics();
-            checkGameLogic();
+            checkGameLogic(deltaTime);
         }
         else {
             m_entityManager->update();
@@ -396,7 +398,7 @@ void GameSystem::checkPhysics() {
         }
     }
 }
-void GameSystem::checkGameLogic() {
+void GameSystem::checkGameLogic(float deltaTime) {
     auto& entityList = m_entityManager->getEntities(ComponentType::SHAPE_RENDER);
     for (const auto& entity : entityList) {
         if (entity->getComponent<ShapeRenderComponent>()->getShapeType() == ShapeType::CIRCLE) {
@@ -406,7 +408,7 @@ void GameSystem::checkGameLogic() {
                 break;
             }
             auto& vel = entity->getComponent<TransformationComponent>()->velocity;
-            vel.resize(std::min(vel.length() + config.ballSpeedIncrement * m_frameDelay, config.maxBallSpeed));
+            vel.resize(std::min(vel.length() + config.ballSpeedIncrement * deltaTime, config.maxBallSpeed));
         }
     }
 
