@@ -4,7 +4,7 @@
 #include <random>
 GameSystem::GameSystem()
     : m_entityManager(std::shared_ptr<EntityManager>(new EntityManager()))
-    , window(sf::RenderWindow(sf::VideoMode(config.width, config.height), "Breakout SanginGeum"))
+    , window(sf::RenderWindow(sf::VideoMode(config.width, config.height), "Breakout"))
 {
     window.setFramerateLimit(config.fps);
 }

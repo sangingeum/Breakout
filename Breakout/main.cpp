@@ -3,7 +3,7 @@
 #include <SFML/Graphics.hpp>
 #include "GameSystem.hpp"
 
-int main()
+int WinMain()
 {   
     GameSystem system{};
     system.run();
