@@ -2,6 +2,7 @@
 #include <iostream>
 #include <format>
 #include <random>
+#include "Profiler.hpp"
 GameSystem::GameSystem()
     : m_entityManager(std::shared_ptr<EntityManager>(new EntityManager()))
     , window(sf::RenderWindow(sf::VideoMode(config.width, config.height), "Breakout"))
@@ -10,6 +11,7 @@ GameSystem::GameSystem()
 }
 
 void GameSystem::resetGame() {
+    PROFILE_FUNCTION();
     m_entityManager->clear();
     m_score = 0;
     unsigned col = 15, row = 20;
@@ -39,10 +41,12 @@ void GameSystem::resetGame() {
 }
 
 void GameSystem::run(){
+    PROFILE_FUNCTION();
     resetGame();
     sf::Clock clock;
     while (window.isOpen())
     {   
+        PROFILE_SCOPE("Frame");
         float deltaTime = clock.restart().asSeconds() * 60.f;
         if (!m_pause) {
             m_entityManager->update();
@@ -61,6 +65,7 @@ void GameSystem::run(){
 }
 
 void GameSystem::handleUserInput(){
+    PROFILE_FUNCTION();
     sf::Event event;
     while (window.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {
@@ -133,7 +138,7 @@ void GameSystem::handleUserInput(){
     }
 }
 void GameSystem::transform(float timeStep){
- 
+    PROFILE_FUNCTION();
     for (auto& entity : m_entityManager->getEntities(ComponentType::PLAYER_INPUT)) {
         auto PIComponent = entity->getComponent<PlayerInputComponent>();
         auto TComponent = entity->getComponent<TransformationComponent>();
@@ -162,21 +167,25 @@ void GameSystem::transform(float timeStep){
 }
 
 void GameSystem::render(){
-    window.clear();
-    for (auto& entity : m_entityManager->getEntities(ComponentType::SHAPE_RENDER)) {
-        auto shape = entity->getComponent<ShapeRenderComponent>();
-        const auto& position = entity->getComponent<TransformationComponent>()->position;
-        if (shape->getShapeType() == ShapeType::RECTANGLE) {
-            auto rect = shape->getShape<sf::RectangleShape>();
-            rect->setPosition(position.x, position.y);
-            window.draw(*rect);
-        }
-        else if(shape->getShapeType() == ShapeType::CIRCLE) {
-            auto circle = shape->getShape<sf::CircleShape>();
-            circle->setPosition(position.x, position.y);
-            window.draw(*circle);
+    {
+        PROFILE_FUNCTION();
+        window.clear();
+        for (auto& entity : m_entityManager->getEntities(ComponentType::SHAPE_RENDER)) {
+            auto shape = entity->getComponent<ShapeRenderComponent>();
+            const auto& position = entity->getComponent<TransformationComponent>()->position;
+            if (shape->getShapeType() == ShapeType::RECTANGLE) {
+                auto rect = shape->getShape<sf::RectangleShape>();
+                rect->setPosition(position.x, position.y);
+                window.draw(*rect);
+            }
+            else if (shape->getShapeType() == ShapeType::CIRCLE) {
+                auto circle = shape->getShape<sf::CircleShape>();
+                circle->setPosition(position.x, position.y);
+                window.draw(*circle);
+            }
         }
     }
+    PROFILE_SCOPE("Sleeping");
     window.display();
 }
 
@@ -373,6 +382,7 @@ void GameSystem::resolveCollision(std::shared_ptr<CollisionComponent>& collision
 
 }
 void GameSystem::checkPhysics() {
+    PROFILE_FUNCTION();
     // TODO
     auto& entityList = m_entityManager->getEntities(ComponentType::COLLISION);
     size_t entityListSize = entityList.size();
@@ -399,6 +409,7 @@ void GameSystem::checkPhysics() {
     }
 }
 void GameSystem::checkGameLogic(float deltaTime) {
+    PROFILE_FUNCTION();
     auto& entityList = m_entityManager->getEntities(ComponentType::SHAPE_RENDER);
     for (const auto& entity : entityList) {
         if (entity->getComponent<ShapeRenderComponent>()->getShapeType() == ShapeType::CIRCLE) {

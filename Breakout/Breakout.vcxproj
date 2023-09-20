@@ -146,6 +146,7 @@
     <ClCompile Include="PlayerInputComponent.cpp" />
     <ClInclude Include="PlayerInputComponent.hpp" />
     <ClCompile Include="TransformationComponent.cpp" />
+    <ClInclude Include="Profiler.hpp" />
     <ClInclude Include="TransformationComponent.hpp" />
     <ClCompile Include="Vec2.cpp" />
     <ClInclude Include="ShapeRenderComponent.hpp" />

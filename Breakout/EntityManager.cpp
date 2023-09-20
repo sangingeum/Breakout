@@ -1,8 +1,9 @@
 #include "EntityManager.hpp"
-
+#include "Profiler.hpp"
 
 EntityManager::EntityManager() {};
 void EntityManager::update() {
+	PROFILE_SCOPE("Update");
 	// Add
 	for (auto entity : m_toAdd) {
 		m_entities.push_back(entity);
